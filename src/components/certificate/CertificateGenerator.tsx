@@ -4,6 +4,16 @@ import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import { generateCertificateNumber } from "@/lib/greekNumerals";
 
+const MERKPUNKTE = [
+  "Schulische Zwecke haben bei der IKT-Nutzung immer Vorrang.",
+  "Private Geraete (BYOD) brauchen Passwortschutz und regelmaessige Updates.",
+  "Schulinterne Daten gehoeren auf offizielle BBW-Speicher (OneDrive, Teams, Nextcloud).",
+  "Zugangsdaten sind streng vertraulich - Konten nie teilen, MFA aktivieren.",
+  "Keine persoenlichen Daten in generative KI-Tools eingeben.",
+  "Nur Auszuege urheberrechtlich geschuetzter Werke duerfen kopiert werden.",
+  "Sicherheitsvorfaelle sofort dem PIKT-/TIKT-Team melden.",
+];
+
 export default function CertificateGenerator() {
   const [userName, setUserName] = useState<string>("");
   const [certificateNumber, setCertificateNumber] = useState<string | null>(
@@ -23,7 +33,6 @@ export default function CertificateGenerator() {
       let count: number;
 
       if (alreadyCompleted) {
-        // Don't increment again, just read the current count
         const res = await fetch("/api/complete", { method: "GET" });
         const data = await res.json();
         count = data.count;
@@ -55,65 +64,95 @@ export default function CertificateGenerator() {
         format: "a4",
       });
 
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
+      const pw = doc.internal.pageSize.getWidth(); // 297
+      const ph = doc.internal.pageSize.getHeight(); // 210
 
-      // Light background
+      // Background
       doc.setFillColor(248, 250, 245);
-      doc.rect(0, 0, pageWidth, pageHeight, "F");
+      doc.rect(0, 0, pw, ph, "F");
 
       // Green border
       doc.setDrawColor(141, 182, 0);
       doc.setLineWidth(2);
-      doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+      doc.rect(8, 8, pw - 16, ph - 16);
 
-      // Title: "Bestätigung"
+      // Inner thin border
+      doc.setLineWidth(0.3);
+      doc.rect(12, 12, pw - 24, ph - 24);
+
+      // Title
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(28);
+      doc.setFontSize(26);
       doc.setTextColor(51, 51, 51);
-      doc.text("Bestätigung", pageWidth / 2, 45, { align: "center" });
+      doc.text("Bestaetigung", pw / 2, 30, { align: "center" });
 
       // Subtitle
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(16);
+      doc.setFontSize(14);
       doc.setTextColor(80, 80, 80);
       doc.text(
         "Kenntnisnahme der Nutzungsrichtlinie IKT",
-        pageWidth / 2,
-        58,
+        pw / 2,
+        40,
         { align: "center" }
       );
-
-      // School name
-      doc.setFontSize(14);
+      doc.setFontSize(12);
       doc.setTextColor(100, 100, 100);
-      doc.text("BBW Berufsbildungsschule Winterthur", pageWidth / 2, 70, {
+      doc.text("BBW Berufsbildungsschule Winterthur", pw / 2, 48, {
         align: "center",
       });
 
       // Decorative line
       doc.setDrawColor(141, 182, 0);
       doc.setLineWidth(0.5);
-      doc.line(pageWidth / 2 - 60, 78, pageWidth / 2 + 60, 78);
+      doc.line(pw / 2 - 50, 53, pw / 2 + 50, 53);
 
       // User name
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
+      doc.setFontSize(20);
       doc.setTextColor(33, 33, 33);
       const displayName =
         userName.trim() !== "" ? userName.trim() : "___________________";
-      doc.text(displayName, pageWidth / 2, 95, { align: "center" });
+      doc.text(displayName, pw / 2, 64, { align: "center" });
 
       // Confirmation text
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(12);
+      doc.setFontSize(11);
       doc.setTextColor(60, 60, 60);
       doc.text(
         "hat das interaktive Merkblatt zur NRL IKT erfolgreich durchgearbeitet.",
-        pageWidth / 2,
-        110,
+        pw / 2,
+        73,
         { align: "center" }
       );
+
+      // Decorative line before Merkpunkte
+      doc.setDrawColor(200, 210, 180);
+      doc.setLineWidth(0.3);
+      doc.line(30, 78, pw - 30, 78);
+
+      // Merkpunkte heading
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 130, 0);
+      doc.text("Die wichtigsten Punkte der NRL IKT:", 30, 84);
+
+      // Merkpunkte
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(70, 70, 70);
+
+      let y = 90;
+      MERKPUNKTE.forEach((punkt) => {
+        doc.setFillColor(141, 182, 0);
+        doc.circle(33, y - 1, 1, "F");
+        doc.text(punkt, 37, y);
+        y += 6;
+      });
+
+      // Decorative line after Merkpunkte
+      doc.setDrawColor(200, 210, 180);
+      doc.line(30, y + 2, pw - 30, y + 2);
 
       // Date
       const now = new Date();
@@ -122,21 +161,17 @@ export default function CertificateGenerator() {
         month: "2-digit",
         year: "numeric",
       });
-      doc.setFontSize(12);
+      doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
-      doc.text(`Datum: ${formattedDate}`, pageWidth / 2, 125, {
+      doc.text("Datum: " + formattedDate, pw / 2, y + 12, {
         align: "center",
       });
 
       // Certificate number at bottom
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Zertifikat-Nr.: ${certificateNumber}`,
-        pageWidth / 2,
-        pageHeight - 20,
-        { align: "center" }
-      );
+      const certText = "Zertifikat-Nr.: " + String(certificateNumber).trim();
+      doc.text(certText, pw / 2, ph - 16, { align: "center" });
 
       doc.save("NRL-Merkblatt-Zertifikat.pdf");
     } finally {
@@ -146,7 +181,6 @@ export default function CertificateGenerator() {
 
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-green-300 p-8 shadow-lg max-w-xl mx-auto">
-      {/* Congratulations message */}
       <h2 className="text-2xl md:text-3xl font-bold text-green-800 text-center mb-2">
         Herzlichen Glückwunsch!
       </h2>
@@ -155,7 +189,6 @@ export default function CertificateGenerator() {
         durchgearbeitet.
       </p>
 
-      {/* Certificate number box */}
       {certificateNumber ? (
         <div className="bg-white border border-green-400 rounded-xl px-6 py-4 mb-6 shadow-sm text-center">
           <span className="text-xs uppercase tracking-widest text-green-600 block mb-1">
@@ -173,7 +206,6 @@ export default function CertificateGenerator() {
         </div>
       )}
 
-      {/* Name input */}
       <label
         htmlFor="userName"
         className="text-sm font-medium text-green-800 mb-1"
@@ -189,7 +221,6 @@ export default function CertificateGenerator() {
         className="w-full max-w-xs mb-6 px-4 py-2 border border-green-300 rounded-lg text-center text-green-900 placeholder-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
       />
 
-      {/* Download button */}
       <button
         onClick={handleDownloadPDF}
         disabled={isGenerating || !certificateNumber}
