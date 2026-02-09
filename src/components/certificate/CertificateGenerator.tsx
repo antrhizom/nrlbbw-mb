@@ -3,15 +3,16 @@
 import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import { generateCertificateNumber } from "@/lib/greekNumerals";
+import { ROBOTO_BASE64 } from "@/lib/robotoFont";
 
 const MERKPUNKTE = [
   "Schulische Zwecke haben bei der IKT-Nutzung immer Vorrang.",
-  "Private Geraete (BYOD) brauchen Passwortschutz und regelmaessige Updates.",
-  "Schulinterne Daten gehoeren auf offizielle BBW-Speicher (OneDrive, Teams, Nextcloud).",
-  "Zugangsdaten sind streng vertraulich - Konten nie teilen, MFA aktivieren.",
-  "Keine persoenlichen Daten in generative KI-Tools eingeben.",
-  "Nur Auszuege urheberrechtlich geschuetzter Werke duerfen kopiert werden.",
-  "Sicherheitsvorfaelle sofort dem PIKT-/TIKT-Team melden.",
+  "Private Geräte (BYOD) brauchen Passwortschutz und regelmässige Updates.",
+  "Schulinterne Daten gehören auf offizielle BBW-Speicher (OneDrive, Teams, Nextcloud).",
+  "Zugangsdaten sind streng vertraulich \u2013 Konten nie teilen, MFA aktivieren.",
+  "Keine persönlichen Daten in generative KI-Tools eingeben.",
+  "Nur Auszüge urheberrechtlich geschützter Werke dürfen kopiert werden.",
+  "Sicherheitsvorfälle sofort dem PIKT-/TIKT-Team melden.",
 ];
 
 export default function CertificateGenerator() {
@@ -52,6 +53,12 @@ export default function CertificateGenerator() {
     }
   }
 
+  function registerFont(doc: jsPDF) {
+    doc.addFileToVFS("Roboto-Regular.ttf", ROBOTO_BASE64);
+    doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+    doc.addFont("Roboto-Regular.ttf", "Roboto", "bold");
+  }
+
   function handleDownloadPDF() {
     if (!certificateNumber) return;
 
@@ -64,8 +71,12 @@ export default function CertificateGenerator() {
         format: "a4",
       });
 
-      const pw = doc.internal.pageSize.getWidth(); // 297
-      const ph = doc.internal.pageSize.getHeight(); // 210
+      // Register custom font for Umlaut support
+      registerFont(doc);
+      doc.setFont("Roboto", "normal");
+
+      const pw = doc.internal.pageSize.getWidth();
+      const ph = doc.internal.pageSize.getHeight();
 
       // Background
       doc.setFillColor(248, 250, 245);
@@ -81,13 +92,13 @@ export default function CertificateGenerator() {
       doc.rect(12, 12, pw - 24, ph - 24);
 
       // Title
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Roboto", "bold");
       doc.setFontSize(26);
       doc.setTextColor(51, 51, 51);
-      doc.text("Bestaetigung", pw / 2, 30, { align: "center" });
+      doc.text("Bestätigung", pw / 2, 30, { align: "center" });
 
       // Subtitle
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Roboto", "normal");
       doc.setFontSize(14);
       doc.setTextColor(80, 80, 80);
       doc.text(
@@ -108,7 +119,7 @@ export default function CertificateGenerator() {
       doc.line(pw / 2 - 50, 53, pw / 2 + 50, 53);
 
       // User name
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Roboto", "bold");
       doc.setFontSize(20);
       doc.setTextColor(33, 33, 33);
       const displayName =
@@ -116,7 +127,7 @@ export default function CertificateGenerator() {
       doc.text(displayName, pw / 2, 64, { align: "center" });
 
       // Confirmation text
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Roboto", "normal");
       doc.setFontSize(11);
       doc.setTextColor(60, 60, 60);
       doc.text(
@@ -132,13 +143,13 @@ export default function CertificateGenerator() {
       doc.line(30, 78, pw - 30, 78);
 
       // Merkpunkte heading
-      doc.setFont("helvetica", "bold");
+      doc.setFont("Roboto", "bold");
       doc.setFontSize(9);
       doc.setTextColor(100, 130, 0);
       doc.text("Die wichtigsten Punkte der NRL IKT:", 30, 84);
 
       // Merkpunkte
-      doc.setFont("helvetica", "normal");
+      doc.setFont("Roboto", "normal");
       doc.setFontSize(8);
       doc.setTextColor(70, 70, 70);
 
