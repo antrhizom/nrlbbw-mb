@@ -8,12 +8,18 @@ function getAdminDb(): Firestore | null {
 
   const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const rawKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
 
-  if (!projectId || !clientEmail || !privateKey || privateKey.includes("your-private-key")) {
-    console.warn("Firebase Admin SDK not configured – running in fallback mode.");
+  if (!projectId || !clientEmail || !rawKey || rawKey.includes("your-private-key")) {
+    console.warn(
+      "Firebase Admin SDK not configured – running in fallback mode.",
+      { hasProjectId: !!projectId, hasClientEmail: !!clientEmail, hasPrivateKey: !!rawKey }
+    );
     return null;
   }
+
+  // Handle both JSON-escaped \\n and real newlines
+  const privateKey = rawKey.includes("\\n") ? rawKey.replace(/\\n/g, "\n") : rawKey;
 
   try {
     let app: App;
@@ -25,6 +31,7 @@ function getAdminDb(): Firestore | null {
       app = getApps()[0];
     }
     adminDb = getFirestore(app);
+    console.log("Firebase Admin SDK initialized successfully");
     return adminDb;
   } catch (e) {
     console.error("Failed to initialize Firebase Admin:", e);
