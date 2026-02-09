@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
 
 interface TFStatement {
   statement: string;
@@ -28,7 +28,12 @@ export default function TrueFalseCards({
   statements,
   onComplete,
 }: TrueFalseCardsProps) {
-  const shuffledStatements = useMemo(() => shuffleArray(statements), [statements]);
+  const shuffledRef = useRef<TFStatement[] | null>(null);
+  if (!shuffledRef.current) {
+    shuffledRef.current = shuffleArray(statements);
+  }
+  const shuffledStatements = shuffledRef.current;
+
   const [answers, setAnswers] = useState<Record<number, boolean | null>>({});
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
 

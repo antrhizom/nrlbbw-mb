@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
 
 interface CheckItem {
   text: string;
@@ -29,7 +29,11 @@ export default function ChecklistInteractive({
   items,
   onComplete,
 }: ChecklistInteractiveProps) {
-  const shuffledItems = useMemo(() => shuffleArray(items), [items]);
+  const shuffledRef = useRef<CheckItem[] | null>(null);
+  if (!shuffledRef.current) {
+    shuffledRef.current = shuffleArray(items);
+  }
+  const shuffledItems = shuffledRef.current;
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);

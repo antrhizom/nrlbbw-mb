@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
 
 interface DragItem {
   id: string;
@@ -32,7 +32,11 @@ export default function DragDropClassify({
   categories,
   onComplete,
 }: DragDropClassifyProps) {
-  const shuffledItems = useMemo(() => shuffleArray(initialItems), [initialItems]);
+  const shuffledRef = useRef<DragItem[] | null>(null);
+  if (!shuffledRef.current) {
+    shuffledRef.current = shuffleArray(initialItems);
+  }
+  const shuffledItems = shuffledRef.current;
   const [placements, setPlacements] = useState<Record<string, string>>({});
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);

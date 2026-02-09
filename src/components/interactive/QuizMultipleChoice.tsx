@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
 
 interface QuizOption {
   text: string;
@@ -29,7 +29,12 @@ export default function QuizMultipleChoice({
   explanation,
   onCorrect,
 }: QuizMultipleChoiceProps) {
-  const shuffledOptions = useMemo(() => shuffleArray(options), [options]);
+  const shuffledRef = useRef<QuizOption[] | null>(null);
+  if (!shuffledRef.current) {
+    shuffledRef.current = shuffleArray(options);
+  }
+  const shuffledOptions = shuffledRef.current;
+
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);

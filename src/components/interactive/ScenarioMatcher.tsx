@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface Scenario {
   situation: string;
@@ -50,10 +50,11 @@ export default function ScenarioMatcher({
   scenarios,
   onComplete,
 }: ScenarioMatcherProps) {
-  const shuffledScenarios = useMemo(
-    () => shuffleArray(scenarios).map(shuffleOptions),
-    [scenarios]
-  );
+  const shuffledRef = useRef<ShuffledScenario[] | null>(null);
+  if (!shuffledRef.current) {
+    shuffledRef.current = shuffleArray(scenarios).map(shuffleOptions);
+  }
+  const shuffledScenarios = shuffledRef.current;
   const [currentScenario, setCurrentScenario] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
