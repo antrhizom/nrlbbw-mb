@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface QuizOption {
   text: string;
@@ -14,12 +14,22 @@ interface QuizMultipleChoiceProps {
   onCorrect: () => void;
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function QuizMultipleChoice({
   question,
   options,
   explanation,
   onCorrect,
 }: QuizMultipleChoiceProps) {
+  const shuffledOptions = useMemo(() => shuffleArray(options), [options]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -37,7 +47,7 @@ export default function QuizMultipleChoice({
 
   const handleCheck = () => {
     if (selected.size === 0) return;
-    const correct = options.every(
+    const correct = shuffledOptions.every(
       (opt, i) => opt.correct === selected.has(i)
     );
     setIsCorrect(correct);
@@ -50,7 +60,7 @@ export default function QuizMultipleChoice({
       <h4 className="font-semibold text-gray-800 mb-1">📝 {question}</h4>
       <p className="text-sm text-gray-500 mb-4">(Mehrere Antworten möglich)</p>
       <div className="space-y-2">
-        {options.map((opt, i) => (
+        {shuffledOptions.map((opt, i) => (
           <button
             key={i}
             onClick={() => toggleOption(i)}

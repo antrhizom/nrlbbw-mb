@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface QuizOption {
   text: string;
@@ -14,12 +14,22 @@ interface QuizSingleChoiceProps {
   onCorrect: () => void;
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function QuizSingleChoice({
   question,
   options,
   explanation,
   onCorrect,
 }: QuizSingleChoiceProps) {
+  const shuffledOptions = useMemo(() => shuffleArray(options), [options]);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -32,7 +42,7 @@ export default function QuizSingleChoice({
 
   const handleCheck = () => {
     if (selected === null) return;
-    const correct = options[selected].correct;
+    const correct = shuffledOptions[selected].correct;
     setIsCorrect(correct);
     setShowResult(true);
     if (correct) onCorrect();
@@ -42,7 +52,7 @@ export default function QuizSingleChoice({
     <div className="bg-bbw-blue-100 rounded-xl p-6">
       <h4 className="font-semibold text-gray-800 mb-4">📝 {question}</h4>
       <div className="space-y-2">
-        {options.map((opt, i) => (
+        {shuffledOptions.map((opt, i) => (
           <button
             key={i}
             onClick={() => handleSelect(i)}

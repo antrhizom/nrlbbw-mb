@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface DragItem {
   id: string;
@@ -16,6 +16,15 @@ interface DragDropClassifyProps {
   onComplete: () => void;
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function DragDropClassify({
   title,
   description,
@@ -23,12 +32,13 @@ export default function DragDropClassify({
   categories,
   onComplete,
 }: DragDropClassifyProps) {
+  const shuffledItems = useMemo(() => shuffleArray(initialItems), [initialItems]);
   const [placements, setPlacements] = useState<Record<string, string>>({});
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
-  const unplaced = initialItems.filter((item) => !placements[item.id]);
+  const unplaced = shuffledItems.filter((item) => !placements[item.id]);
 
   const handleDragStart = (itemId: string) => {
     setDraggedItem(itemId);
@@ -66,10 +76,10 @@ export default function DragDropClassify({
   };
 
   const handleCheck = () => {
-    const allPlaced = initialItems.every((item) => placements[item.id]);
+    const allPlaced = shuffledItems.every((item) => placements[item.id]);
     if (!allPlaced) return;
 
-    const correct = initialItems.every(
+    const correct = shuffledItems.every(
       (item) => placements[item.id] === item.category
     );
     setIsCorrect(correct);
@@ -77,7 +87,7 @@ export default function DragDropClassify({
     if (correct) onComplete();
   };
 
-  const allPlaced = initialItems.every((item) => placements[item.id]);
+  const allPlaced = shuffledItems.every((item) => placements[item.id]);
 
   return (
     <div className="bg-bbw-green-50 rounded-xl p-6">
@@ -111,7 +121,7 @@ export default function DragDropClassify({
 
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((cat) => {
-          const catItems = initialItems.filter(
+          const catItems = shuffledItems.filter(
             (item) => placements[item.id] === cat
           );
           return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface CheckItem {
   text: string;
@@ -14,12 +14,22 @@ interface ChecklistInteractiveProps {
   onComplete: () => void;
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function ChecklistInteractive({
   title,
   description,
   items,
   onComplete,
 }: ChecklistInteractiveProps) {
+  const shuffledItems = useMemo(() => shuffleArray(items), [items]);
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -36,7 +46,7 @@ export default function ChecklistInteractive({
   };
 
   const handleCheck = () => {
-    const correct = items.every(
+    const correct = shuffledItems.every(
       (item, i) => item.correct === checked.has(i)
     );
     setIsCorrect(correct);
@@ -49,7 +59,7 @@ export default function ChecklistInteractive({
       <h4 className="font-semibold text-gray-800 mb-1">☑️ {title}</h4>
       <p className="text-sm text-gray-600 mb-4">{description}</p>
       <div className="space-y-2">
-        {items.map((item, i) => (
+        {shuffledItems.map((item, i) => (
           <button
             key={i}
             onClick={() => toggleItem(i)}

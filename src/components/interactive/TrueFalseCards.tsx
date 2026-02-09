@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 interface TFStatement {
   statement: string;
@@ -14,11 +14,21 @@ interface TrueFalseCardsProps {
   onComplete: () => void;
 }
 
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function TrueFalseCards({
   title,
   statements,
   onComplete,
 }: TrueFalseCardsProps) {
+  const shuffledStatements = useMemo(() => shuffleArray(statements), [statements]);
   const [answers, setAnswers] = useState<Record<number, boolean | null>>({});
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
 
@@ -33,7 +43,7 @@ export default function TrueFalseCards({
 
     const newRevealed = new Set(revealed);
     newRevealed.add(index);
-    if (newRevealed.size === statements.length) {
+    if (newRevealed.size === shuffledStatements.length) {
       onComplete();
     }
   };
@@ -42,7 +52,7 @@ export default function TrueFalseCards({
     <div className="bg-bbw-green-50 rounded-xl p-6">
       <h4 className="font-semibold text-gray-800 mb-4">🎯 {title}</h4>
       <div className="space-y-3">
-        {statements.map((st, i) => {
+        {shuffledStatements.map((st, i) => {
           const answered = revealed.has(i);
           const correct = answers[i] === st.isTrue;
 
@@ -86,7 +96,7 @@ export default function TrueFalseCards({
           );
         })}
       </div>
-      {revealed.size === statements.length && (
+      {revealed.size === shuffledStatements.length && (
         <p className="mt-4 text-sm text-bbw-green-700 font-medium">
           ✅ Alle Aussagen bearbeitet!
         </p>

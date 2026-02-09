@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 interface Scenario {
+  situation: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+
+interface ShuffledScenario {
   situation: string;
   options: string[];
   correctIndex: number;
@@ -15,18 +22,46 @@ interface ScenarioMatcherProps {
   onComplete: () => void;
 }
 
+function shuffleOptions(scenario: Scenario): ShuffledScenario {
+  const indices = scenario.options.map((_, i) => i);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  return {
+    situation: scenario.situation,
+    options: indices.map((i) => scenario.options[i]),
+    correctIndex: indices.indexOf(scenario.correctIndex),
+    explanation: scenario.explanation,
+  };
+}
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function ScenarioMatcher({
   title,
   scenarios,
   onComplete,
 }: ScenarioMatcherProps) {
+  const shuffledScenarios = useMemo(
+    () => shuffleArray(scenarios).map(shuffleOptions),
+    [scenarios]
+  );
   const [currentScenario, setCurrentScenario] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [completed, setCompleted] = useState(0);
 
-  const scenario = scenarios[currentScenario];
+  const scenario = shuffledScenarios[currentScenario];
+  const isLastScenario = currentScenario >= shuffledScenarios.length - 1;
 
   const handleSelect = (index: number) => {
     if (showResult && isCorrect) return;
@@ -41,27 +76,40 @@ export default function ScenarioMatcher({
     setShowResult(true);
   };
 
+  // Auto-advance: when correct on last scenario, auto-complete after a short delay
+  useEffect(() => {
+    if (showResult && isCorrect) {
+      if (isLastScenario) {
+        const timer = setTimeout(() => {
+          setCompleted(shuffledScenarios.length);
+          onComplete();
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [showResult, isCorrect, isLastScenario, shuffledScenarios.length, onComplete]);
+
   const handleNext = () => {
     const newCompleted = completed + 1;
     setCompleted(newCompleted);
-    if (currentScenario < scenarios.length - 1) {
+    if (currentScenario < shuffledScenarios.length - 1) {
       setCurrentScenario((prev) => prev + 1);
       setSelected(null);
       setShowResult(false);
       setIsCorrect(false);
     }
-    if (newCompleted === scenarios.length) {
+    if (newCompleted === shuffledScenarios.length) {
       onComplete();
     }
   };
 
-  const allDone = completed === scenarios.length;
+  const allDone = completed === shuffledScenarios.length;
 
   return (
     <div className="bg-bbw-green-50 rounded-xl p-6">
       <h4 className="font-semibold text-gray-800 mb-2">🎭 {title}</h4>
       <p className="text-sm text-gray-500 mb-4">
-        Szenario {currentScenario + 1} von {scenarios.length}
+        Szenario {currentScenario + 1} von {shuffledScenarios.length}
       </p>
 
       {!allDone ? (
@@ -110,16 +158,14 @@ export default function ScenarioMatcher({
               >
                 Überprüfen
               </button>
-            ) : (
+            ) : !isLastScenario ? (
               <button
                 onClick={handleNext}
                 className="px-5 py-2 rounded-lg font-medium bg-bbw-green-500 text-white hover:bg-bbw-green-600 transition-colors"
               >
-                {currentScenario < scenarios.length - 1
-                  ? "Nächstes Szenario →"
-                  : "Abschliessen ✓"}
+                Nächstes Szenario →
               </button>
-            )}
+            ) : null}
           </div>
 
           {showResult && (
@@ -140,7 +186,7 @@ export default function ScenarioMatcher({
       ) : (
         <div className="text-center py-4">
           <p className="text-bbw-green-700 font-medium">
-            ✅ Alle {scenarios.length} Szenarien erfolgreich bearbeitet!
+            ✅ Alle {shuffledScenarios.length} Szenarien erfolgreich bearbeitet!
           </p>
         </div>
       )}
